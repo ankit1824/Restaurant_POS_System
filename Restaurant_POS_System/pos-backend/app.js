@@ -4,37 +4,40 @@ const config = require("./config/config");
 const globalErrorHandler = require("./middlewares/globalErrorHandler");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+
 const app = express();
 
-
-const PORT = config.port;
+// Connect Database FIRST
 connectDB();
 
 // Middlewares
 app.use(cors({
-    credentials: true,
-    origin: ['http://localhost:5173']
-}))
-app.use(express.json()); // parse incoming request in json format
-app.use(cookieParser())
+  origin: [
+    "http://localhost:5173",           // local dev
+    "https://*.vercel.app"             // production frontend
+  ],
+  credentials: true
+}));
 
+app.use(express.json());
+app.use(cookieParser());
 
-// Root Endpoint
-app.get("/", (req,res) => {
-    res.json({message : "Hello from POS Server!"});
-})
+// Root Endpoint (health check)
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "POS Server running" });
+});
 
-// Other Endpoints
+// Routes
 app.use("/api/user", require("./routes/userRoute"));
 app.use("/api/order", require("./routes/orderRoute"));
 app.use("/api/table", require("./routes/tableRoute"));
 app.use("/api/payment", require("./routes/paymentRoute"));
 
-// Global Error Handler
+// Global Error Handler (LAST)
 app.use(globalErrorHandler);
 
-
-// Server
+// Server (Render requires process.env.PORT)
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`☑️  POS Server is listening on port ${PORT}`);
-})
+  console.log(`☑️ POS Server listening on port ${PORT}`);
+});
